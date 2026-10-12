@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>TSUNAMI EARLY WARNING SYSTEM</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+html,body{
+width:100%;
+height:100%;
+overflow:hidden;
+font-family:Arial,Helvetica,sans-serif;
+color:#112a45;
+background:#e2f0fb;
+}
+
+body{
+height:100dvh;
+}
+
+.app{
+height:100dvh;
+display:flex;
+flex-direction:column;
+background:
+radial-gradient(circle at 10% 10%,rgba(0,180,255,.18),transparent 28%),
+radial-gradient(circle at 90% 15%,rgba(70,110,255,.12),transparent 30%),
+radial-gradient(circle at 50% 100%,rgba(0,220,140,.10),transparent 35%),
+linear-gradient(135deg,#f0f7ff 0%,#dbe9fb 42%,#e4f0fc 70%,#f0f7ff 100%);
+}
+
+/* ================= HEADER ================= */
+
+.header{
+height:66px;
+min-height:66px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:8px 15px;
+background:linear-gradient(90deg,#00508f,#0077cc,#00508f);
+border-bottom:2px solid #00c6ff;
+box-shadow:0 4px 16px rgba(0,120,200,.25);
+}
+
+.titleBox h1{
+color:#ffffff;
+font-size:22px;
+letter-spacing:1px;
+text-shadow:0 2px 5px rgba(0,0,0,.3);
+}
+
+.titleBox p{
+margin-top:3px;
+color:#bfe3ff;
+font-size:10px;
+letter-spacing:1px;
+font-weight:bold;
+}
+
+.headerRight{
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.fullBtn{
+padding:8px 12px;
+border:1px solid #7bc6ff;
+border-radius:6px;
+background:#004080;
+color:#ffffff;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+
+.fullBtn:hover{
+background:#0059b3;
+}
+
+/* ================= MAIN ================= */
+
+.main{
+flex:1;
+min-height:0;
+display:grid;
+grid-template-columns:260px minmax(0,1fr) 300px;
+gap:7px;
+padding:7px;
+}
+
+.panel{
+min-height:0;
+overflow:auto;
+border:1px solid #b0d4f5;
+border-radius:8px;
+background:
+linear-gradient(
+145deg,
+rgba(255,255,255,.98),
+rgba(240,247,255,.98)
+);
+box-shadow:
+inset 0 0 25px rgba(0,120,255,.03),
+0 4px 12px rgba(0,80,150,.1);
+}
+
+.panel::-webkit-scrollbar{
+width:5px;
+}
+
+.panel::-webkit-scrollbar-thumb{
+background:#8ac0e8;
+border-radius:10px;
+}
+
+.section{
+padding:10px;
+border-bottom:1px solid #d0e4fa;
+}
+
+.sectionTitle{
+margin-bottom:8px;
+color:#0056b3;
+font-size:11px;
+font-weight:bold;
+letter-spacing:.8px;
+}
+
+/* ================= CLOCK ================= */
+
+.clock{
+font-size:21px;
+font-weight:bold;
+color:#0b2545;
+}
+
+.clockLabel{
+margin-top:3px;
+color:#52798f;
+font-size:9px;
+font-weight:bold;
+}
+
+/* ================= SOURCE ================= */
+
+.sourceCard{
+margin-bottom:7px;
+padding:8px;
+border:1px solid #b8daf5;
+border-radius:6px;
+background:linear-gradient(135deg,#f4f9ff,#e6f2ff);
+box-shadow:0 1px 4px rgba(0,80,150,.05);
+}
+
+.sourceTop{
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+
+.sourceName{
+font-size:12px;
+font-weight:bold;
+color:#0b2545;
+}
+
+.sourceState{
+color:#008040;
+font-size:9px;
+font-weight:bold;
+}
+
+.dot{
+display:inline-block;
+width:7px;
+height:7px;
+margin-right:5px;
+border-radius:50%;
+background:#00b359;
+box-shadow:0 0 6px #00b359;
+}
+
+.dot.loading{
+background:#e6a100;
+box-shadow:0 0 6px #e6a100;
+}
+
+.dot.error{
+background:#d92626;
+box-shadow:0 0 6px #d92626;
+}
+
+.sourceInfo{
+margin-top:5px;
+color:#4a6b82;
+font-size:9px;
+line-height:1.5;
+font-weight:bold;
+}
+
+.sourceAgo{
+margin-top:5px;
+color:#0066cc;
+font-size:11px;
+font-weight:bold;
+}
+
+/* ================= LATEST ================= */
+
+.latestMag{
+font-size:40px;
+font-weight:bold;
+color:#cc7a00;
+text-shadow:0 1px 3px rgba(200,120,0,.2);
+}
+
+.latestPlace{
+margin-top:3px;
+color:#102a43;
+font-size:12px;
+font-weight:bold;
+line-height:1.35;
+}
+
+.detailGrid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:5px;
+margin-top:8px;
+}
+
+.detail{
+padding:7px;
+border:1px solid #cce0f7;
+border-radius:5px;
+background:linear-gradient(135deg,#f5f9ff,#ebf4ff);
+}
+
+.detail small{
+display:block;
+color:#52798f;
+font-size:8px;
+font-weight:bold;
+}
+
+.detail b{
+display:block;
+margin-top:2px;
+color:#0b2545;
+font-size:10px;
+word-break:break-word;
+}
+
+/* ================= BUTTONS ================= */
+
+.btnGrid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:5px;
+}
+
+.btn{
+padding:8px 5px;
+border:1px solid #99cbef;
+border-radius:5px;
+background:linear-gradient(135deg,#e1f0ff,#cce5ff);
+color:#004080;
+font-size:10px;
+font-weight:bold;
+cursor:pointer;
+transition:.2s;
+}
+
+.btn:hover{
+background:#b3d7ff;
+border-color:#3399ff;
+color:#00264d;
+box-shadow:0 2px 6px rgba(0,100,200,.2);
+}
+
+.whatsappBtn{
+border-color:#5cd699;
+color:#006633;
+background:linear-gradient(135deg,#e6ffec,#ccffdb);
+}
+
+.whatsappBtn:hover{
+background:#b3ffcc;
+border-color:#00b359;
+color:#004d26;
+}
+
+/* ================= MAP ================= */
+
+.mapPanel{
+position:relative;
+min-width:0;
+min-height:0;
+overflow:hidden;
+border:1px solid #a6d0f5;
+border-radius:8px;
+background:#eef4fc;
+box-shadow:0 4px 12px rgba(0,80,150,.1);
+}
+
+#map{
+width:100%;
+height:100%;
+min-height:300px;
+background:#eef4fc;
+}
+
+.mapTop{
+position:absolute;
+z-index:1000;
+top:9px;
+left:9px;
+right:9px;
+display:flex;
+justify-content:space-between;
+pointer-events:none;
+}
+
+.mapStatus{
+padding:7px 10px;
+border:1px solid #99cbef;
+border-radius:5px;
+background:rgba(255,255,255,.95);
+color:#0056b3;
+font-size:10px;
+font-weight:bold;
+pointer-events:auto;
+box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+.mapControls{
+display:flex;
+gap:4px;
+pointer-events:auto;
+}
+
+.mapControls button{
+padding:6px 8px;
+border:1px solid #99cbef;
+border-radius:5px;
+background:rgba(255,255,255,.95);
+color:#004080;
+font-size:9px;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+.mapControls button:hover{
+background:#e1f0ff;
+border-color:#3399ff;
+color:#00264d;
+}
+
+/* ================= INCOIS ================= */
+
+.iocSeaLevelLink{
+position:absolute;
+z-index:1200;
+left:50%;
+bottom:10px;
+transform:translateX(-50%);
+display:flex;
+gap:6px;
+}
+
+.iocSeaLevelLink a{
+display:block;
+padding:9px 16px;
+border:1px solid #33b5e5;
+border-radius:7px;
+background:linear-gradient(
+135deg,
+rgba(240,248,255,.98),
+rgba(220,240,255,.98)
+);
+color:#0056b3;
+text-decoration:none;
+font-size:10px;
+font-weight:bold;
+letter-spacing:.6px;
+white-space:nowrap;
+box-shadow:0 4px 12px rgba(0,100,200,.2);
+}
+
+.iocSeaLevelLink a:hover{
+background:#d0eaff;
+}
+
+/* ================= LEGEND ================= */
+
+.legend{
+position:absolute;
+z-index:1000;
+left:12px;
+bottom:12px;
+padding:8px;
+border:1px solid #b0d4f5;
+border-radius:6px;
+background:rgba(255,255,255,.95);
+font-size:9px;
+font-weight:bold;
+color:#0b2545;
+box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.legend div{
+margin:3px 0;
+}
+
+.legend span{
+display:inline-block;
+width:9px;
+height:9px;
+margin-right:5px;
+border-radius:2px;
+}
+
+.lg1{
+background:#00b359;
+}
+
+.lg2{
+background:#ffaa00;
+}
+
+.lg3{
+background:#ff3333;
+}
+
+/* ================= NEW MARKER ================= */
+
+.new-red-point{
+color:#e60000;
+font-size:38px;
+line-height:44px;
+text-align:center;
+text-shadow:
+0 0 4px #ffffff,
+0 0 10px rgba(230,0,0,.6);
+animation:newPointPulse 1s infinite;
+}
+
+@keyframes newPointPulse{
+
+0%,100%{
+transform:scale(1);
+}
+
+50%{
+transform:scale(1.35);
+}
+
+}
+
+/* ================= EVENTS ================= */
+
+.eventList{
+padding:7px;
+}
+
+.event{
+margin-bottom:6px;
+padding:8px;
+border:1px solid #bce0fd;
+border-radius:6px;
+background:linear-gradient(135deg,#f4f9ff,#e6f2ff);
+cursor:pointer;
+transition:.2s;
+box-shadow:0 1px 3px rgba(0,80,150,.05);
+}
+
+.event:hover{
+border-color:#3399ff;
+background:#d9ecff;
+box-shadow:0 2px 6px rgba(0,100,200,.15);
+}
+
+.eventHead{
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+
+.mag{
+color:#cc7a00;
+font-size:18px;
+font-weight:bold;
+}
+
+.sourceTag{
+padding:3px 5px;
+border-radius:3px;
+background:#cce5ff;
+color:#004080;
+font-size:8px;
+font-weight:bold;
+}
+
+.eventPlace{
+margin-top:4px;
+color:#0b2545;
+font-size:10px;
+font-weight:bold;
+line-height:1.3;
+}
+
+.eventTime{
+margin-top:4px;
+color:#52798f;
+font-size:8px;
+font-weight:bold;
+}
+
+.eventMeta{
+margin-top:5px;
+color:#3b5970;
+font-size:8px;
+font-weight:bold;
+}
+
+/* ================= STATS ================= */
+
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:4px;
+}
+
+.stat{
+padding:8px 3px;
+border:1px solid #bce0fd;
+border-radius:5px;
+background:linear-gradient(135deg,#f4f9ff,#e6f2ff);
+text-align:center;
+}
+
+.stat b{
+display:block;
+color:#0056b3;
+font-size:17px;
+}
+
+.stat span{
+color:#52798f;
+font-size:8px;
+font-weight:bold;
+}
+
+/* ================= FOOTER ================= */
+
+.footer{
+height:25px;
+min-height:25px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-top:1px solid #b0d4f5;
+background:linear-gradient(90deg,#eef4fc,#dbe9fb,#eef4fc);
+color:#3b5970;
+font-size:8px;
+font-weight:bold;
+letter-spacing:.6px;
+}
+
+/* ================= ALERT ================= */
+
+.alertOverlay{
+position:fixed;
+inset:0;
+z-index:99999;
+display:none;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,.6);
+backdrop-filter:blur(4px);
+}
+
+.alertBox{
+width:min(700px,94vw);
+max-height:90vh;
+overflow:auto;
+padding:22px;
+border:2px solid #e60000;
+border-radius:11px;
+background:linear-gradient(145deg,#fff5f5,#ffe6e6);
+box-shadow:
+0 0 25px rgba(230,0,0,.3),
+0 0 80px rgba(230,0,0,.1);
+animation:alertFlash .7s infinite alternate;
+}
+
+@keyframes alertFlash{
+
+from{
+border-color:#e60000;
+box-shadow:0 0 25px rgba(230,0,0,.3);
+}
+
+to{
+border-color:#ff6666;
+box-shadow:0 0 45px rgba(230,0,0,.5);
+}
+
+}
+
+.alertTitle{
+color:#cc0000;
+font-size:27px;
+font-weight:bold;
+text-align:center;
+}
+
+.alertMag{
+margin:8px;
+color:#cc7a00;
+font-size:55px;
+font-weight:bold;
+text-align:center;
+}
+
+.alertText{
+color:#102a43;
+font-size:13px;
+font-weight:bold;
+line-height:1.6;
+text-align:center;
+}
+
+.alertDetailsGrid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:15px;
+background:rgba(255,255,255,0.8);
+padding:10px;
+border-radius:6px;
+border:1px solid #ff9999;
+}
+
+.alertDetailItem{
+font-size:11px;
+color:#333;
+}
+
+.alertDetailItem b{
+color:#cc0000;
+}
+
+/* ================= MODAL ================= */
+
+.modal{
+position:fixed;
+inset:0;
+z-index:9998;
+display:none;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,.5);
+}
+
+.modalBox{
+width:min(600px,92vw);
+max-height:85vh;
+overflow:auto;
+padding:16px;
+border:1px solid #99cbef;
+border-radius:8px;
+background:linear-gradient(145deg,#ffffff,#f0f7ff);
+box-shadow:0 4px 30px rgba(0,100,200,.2);
+}
+
+.modalTitle{
+margin-bottom:12px;
+color:#0056b3;
+font-size:17px;
+font-weight:bold;
+}
+
+.close{
+float:right;
+color:#cc0000;
+font-size:18px;
+font-weight:bold;
+cursor:pointer;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:1000px){
+
+html,body{
+overflow:auto;
+}
+
+.app{
+height:auto;
+min-height:100dvh;
+}
+
+.header{
+height:auto;
+min-height:66px;
+}
+
+.main{
+grid-template-columns:1fr;
+min-height:auto;
+}
+
+.mapPanel{
+order:1;
+height:60vh;
+min-height:400px;
+}
+
+.leftPanel{
+order:2;
+}
+
+.rightPanel{
+order:3;
+}
+
+}
+
+@media(max-width:600px){
+
+.titleBox h1{
+font-size:15px;
+}
+
+.titleBox p{
+display:none;
+}
+
+.iocSeaLevelLink{
+flex-direction:column;
+bottom:8px;
+}
+
+.iocSeaLevelLink a{
+padding:8px 10px;
+font-size:9px;
+}
+
+}
+
+/* ================= FULL HD ================= */
+
+@media (min-width:1600px) and (min-height:900px){
+
+html,
+body{
+font-size:16px;
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+text-rendering:optimizeLegibility;
+}
+
+.header{
+height:72px;
+min-height:72px;
+padding:9px 18px;
+}
+
+.titleBox h1{
+font-size:25px;
+letter-spacing:1.2px;
+}
+
+.titleBox p{
+font-size:11px;
+margin-top:4px;
+}
+
+.fullBtn{
+padding:9px 14px;
+font-size:12px;
+}
+
+.main{
+grid-template-columns:285px minmax(0,1fr) 330px;
+gap:8px;
+padding:8px;
+}
+
+.section{
+padding:12px;
+}
+
+.sectionTitle{
+margin-bottom:9px;
+font-size:12px;
+}
+
+.clock{
+font-size:23px;
+}
+
+.clockLabel{
+font-size:10px;
+}
+
+.sourceCard{
+margin-bottom:8px;
+padding:10px;
+}
+
+.sourceName{
+font-size:13px;
+}
+
+.sourceState{
+font-size:10px;
+}
+
+.sourceInfo{
+font-size:10px;
+line-height:1.55;
+}
+
+.sourceAgo{
+font-size:12px;
+}
+
+.btn{
+padding:9px 6px;
+font-size:11px;
+}
+
+.latestMag{
+font-size:46px;
+}
+
+.latestPlace{
+font-size:13px;
+}
+
+.detailGrid{
+gap:6px;
+margin-top:9px;
+}
+
+.detail{
+padding:9px;
+}
+
+.detail small{
+font-size:9px;
+}
+
+.detail b{
+font-size:11px;
+line-height:1.3;
+}
+
+.eventList{
+padding:8px;
+}
+
+.event{
+margin-bottom:7px;
+padding:10px;
+}
+
+.mag{
+font-size:20px;
+}
+
+.sourceTag{
+padding:4px 6px;
+font-size:9px;
+}
+
+.eventPlace{
+font-size:11px;
+line-height:1.4;
+}
+
+.eventTime{
+font-size:9px;
+line-height:1.45;
+}
+
+.eventMeta{
+font-size:9px;
+}
+
+.stat{
+padding:9px 4px;
+}
+
+.stat b{
+font-size:19px;
+}
+
+.stat span{
+font-size:9px;
+}
+
+.mapStatus{
+padding:8px 11px;
+font-size:11px;
+}
+
+.mapControls{
+gap:5px;
+}
+
+.mapControls button{
+padding:7px 9px;
+font-size:10px;
+}
+
+.iocSeaLevelLink{
+bottom:12px;
+gap:7px;
+}
+
+.iocSeaLevelLink a{
+padding:10px 17px;
+font-size:11px;
+}
+
+.legend{
+left:13px;
+bottom:13px;
+padding:9px;
+font-size:10px;
+}
+
+.legend span{
+width:10px;
+height:10px;
+}
+
+.footer{
+height:27px;
+min-height:27px;
+font-size:9px;
+}
+
+.alertBox{
+width:min(720px,94vw);
+padding:24px;
+}
+
+.alertTitle{
+font-size:29px;
+}
+
+.alertMag{
+font-size:58px;
+}
+
+.alertText{
+font-size:14px;
+line-height:1.65;
+}
+
+.modalBox{
+width:min(620px,92vw);
+padding:18px;
+}
+
+.modalTitle{
+font-size:18px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header class="header">
+
+<div class="titleBox">
+
+<h1>🌊 TSUNAMI EARLY WARNING SYSTEM</h1>
+
+<p>
+REAL-TIME TSUNAMI MONITOR
+- EARTHQUAKE M4.5+ MONITOR
+- INCOIS
+</p>
+
+</div>
+
+<div class="headerRight">
+
+<button class="fullBtn"
+onclick="toggleFullscreen()">
+⛶ FULL SCREEN
+</button>
+
+</div>
+
+</header>
+
+<main class="main">
+
+<section class="panel leftPanel">
+
+<div class="section">
+
+<div class="sectionTitle">
+🕐 LOCAL / UTC TIME
+</div>
+
+<div class="clock" id="localClock">--:--:--</div>
+
+<div class="clockLabel">
+INDIA LOCAL TIME
+</div>
+
+<div class="clock"
+id="utcClock"
+style="margin-top:8px;">
+--:--:--
+</div>
+
+<div class="clockLabel">
+UTC TIME
+</div>
+
+</div>
+
+<div class="section">
+
+<div class="sectionTitle">
+📡 LIVE SOURCE STATUS
+</div>
+
+<div class="sourceCard">
+
+<div class="sourceTop">
+
+<div class="sourceName">
+<span class="dot loading" id="gfzDot"></span>
+GFZ / GEOFON
+</div>
+
+<div class="sourceState" id="gfzStatus">
+CONNECTING
+</div>
+
+</div>
+
+<div class="sourceInfo" id="gfzInfo">
+Waiting for GFZ data...
+</div>
+
+<div class="sourceAgo" id="gfzAgo">
+Latest event: --
+</div>
+
+</div>
+
+<div class="sourceCard">
+
+<div class="sourceTop">
+
+<div class="sourceName">
+<span class="dot loading" id="usgsDot"></span>
+USGS
+</div>
+
+<div class="sourceState" id="usgsStatus">
+CONNECTING
+</div>
+
+</div>
+
+<div class="sourceInfo" id="usgsInfo">
+Waiting for USGS data...
+</div>
+
+<div class="sourceAgo" id="usgsAgo">
+Latest event: --
+</div>
+
+</div>
+
+<div class="sourceCard">
+
+<div class="sourceTop">
+
+<div class="sourceName">
+<span class="dot loading" id="emscDot"></span>
+EMSC
+</div>
+
+<div class="sourceState" id="emscStatus">
+CONNECTING
+</div>
+
+</div>
+
+<div class="sourceInfo" id="emscInfo">
+Waiting for EMSC data...
+</div>
+
+<div class="sourceAgo" id="emscAgo">
+Latest event: --
+</div>
+
+</div>
+
+</div>
+
+<div class="section">
+
+<div class="sectionTitle">
+🚨 EARTHQUAKE ALERT SYSTEM
+</div>
+
+<div class="btnGrid">
+
+<button class="btn" onclick="testAlert()">
+🔊 TEST ALARM
+</button>
+
+<button class="btn whatsappBtn" onclick="sendLatestWhatsApp()">
+📱 WHATSAPP
+</button>
+
+<button class="btn" onclick="showSourceDetails('GFZ')">
+GFZ DETAILS
+</button>
+
+<button class="btn" onclick="showSourceDetails('EMSC')">
+EMSC DETAILS
+</button>
+
+<button class="btn" onclick="showSourceDetails('USGS')">
+USGS DETAILS
+</button>
+
+</div>
+
+</div>
+
+<div class="section">
+
+<div class="sectionTitle">
+📊 EVENT STATISTICS
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<b id="eventCount">0</b>
+<span>EVENTS</span>
+</div>
+
+<div class="stat">
+<b id="strongest">--</b>
+<span>STRONGEST</span>
+</div>
+
+<div class="stat">
+<b id="updateAge">--</b>
+<span>UPDATE</span>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="mapPanel">
+
+<div class="mapTop">
+
+<div class="mapStatus" id="connectionStatus">
+● CONNECTING LIVE SOURCES...
+</div>
+
+<div class="mapControls">
+
+<button onclick="worldView()">WORLD</button>
+<button onclick="satelliteView()">SATELLITE</button>
+<button onclick="loadEvents()">↻ REFRESH</button>
+
+</div>
+
+</div>
+
+<div id="map"></div>
+
+<div class="iocSeaLevelLink">
+
+<a
+href="https://tsunami.incois.gov.in/TEWS/TSPindex.jsp"
+target="_blank"
+rel="noopener noreferrer">
+🌊 INCOIS INDIAN TSUNAMI EARLY WARNING SYSTEM
+</a>
+
+<a
+href="http://www.ioc-sealevelmonitoring.org/map.php"
+target="_blank"
+rel="noopener noreferrer">
+🌊 SEA LEVEL MONITORING
+</a>
+
+</div>
+
+<div class="legend">
+
+<div>
+<span class="lg1"></span>
+M4.5 – M4.9
+</div>
+
+<div>
+<span class="lg2"></span>
+M5.0 – M5.9
+</div>
+
+<div>
+<span class="lg3"></span>
+M6.0+
+</div>
+
+<div style="margin-top:6px;color:#3b5970;">
+★ NEWEST EVENT
+</div>
+
+</div>
+
+</section>
+
+<section class="panel rightPanel">
+
+<div class="section">
+
+<div class="sectionTitle">
+⚡ LATEST M4.5+ EARTHQUAKE
+</div>
+
+<div class="latestMag" id="latestMag">--</div>
+
+<div class="latestPlace" id="latestPlace">
+Waiting for live earthquake data...
+</div>
+
+<div class="detailGrid">
+
+<div class="detail">
+<small>SOURCE</small>
+<b id="latestSource">--</b>
+</div>
+
+<div class="detail">
+<small>DEPTH</small>
+<b id="latestDepth">--</b>
+</div>
+
+<div class="detail">
+<small>UTC EVENT TIME</small>
+<b id="latestUTC">--</b>
+</div>
+
+<div class="detail">
+<small>DETECTED</small>
+<b id="latestDetected">--</b>
+</div>
+
+<div class="detail">
+<small>LATITUDE</small>
+<b id="latestLat">--</b>
+</div>
+
+<div class="detail">
+<small>LONGITUDE</small>
+<b id="latestLon">--</b>
+</div>
+
+<div class="detail">
+<small>EVENT ID</small>
+<b id="latestID">--</b>
+</div>
+
+<div class="detail">
+<small>UPDATED</small>
+<b id="latestUpdated">--</b>
+</div>
+
+</div>
+
+</div>
+
+<div class="section">
+
+<div class="sectionTitle">
+📋 LIVE GFZ / USGS / EMSC EVENTS
+</div>
+
+<div id="eventList" class="eventList">
+
+<div style="
+padding:15px;
+text-align:center;
+color:#52798f;
+font-weight:bold;">
+Connecting to earthquake sources...
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<footer class="footer">
+
+TSUNAMI EARLY WARNING SYSTEM
+- GFZ / USGS / EMSC
+- INCOIS
+- AUTO REFRESH 10 SEC
+
+</footer>
+
+</div>
+
+<div class="alertOverlay" id="alertOverlay">
+
+<div class="alertBox">
+
+<div class="alertTitle">
+🚨 EARTHQUAKE DETECTED
+</div>
+
+<div class="alertMag" id="alertMagnitude">
+M--
+</div>
+
+<div class="alertText" id="alertText">
+Earthquake event detected.
+</div>
+
+<div class="alertDetailsGrid" id="alertDetailsGrid">
+<!-- Populated dynamically -->
+</div>
+
+</div>
+
+</div>
+
+<div class="modal" id="sourceModal">
+
+<div class="modalBox">
+
+<span class="close" onclick="closeSourceModal()">
+✕
+</span>
+
+<div class="modalTitle" id="modalTitle">
+SOURCE DETAILS
+</div>
+
+<div id="modalContent">
+Loading...
+</div>
+
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+const MIN_MAGNITUDE = 4.5;
+const REFRESH_MS = 10000;
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+const USGS_URL =
+"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson";
+
+const GFZ_URL =
+"https://geofon.gfz.de/fdsnws/event/1/query";
+
+const EMSC_URL =
+"https://www.seismicportal.eu/fdsnws/event/1/query";
+
+
+/* ================= MAP ================= */
+
+const map =
+L.map("map",{
+zoomControl:true,
+worldCopyJump:true
+}).setView([20,0],2);
+
+const streetLayer =
+L.tileLayer(
+"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+{
+maxZoom:19,
+attribution:"© OpenStreetMap"
+}
+).addTo(map);
+
+const satelliteLayer =
+L.tileLayer(
+"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+{
+maxZoom:19,
+attribution:"© Esri"
+});
+
+function worldView(){
+map.setView([20,0],2);
+}
+
+function satelliteView(){
+
+if(map.hasLayer(streetLayer)){
+
+map.removeLayer(streetLayer);
+satelliteLayer.addTo(map);
+
+}else{
+
+map.removeLayer(satelliteLayer);
+streetLayer.addTo(map);
+
+}
+
+}
+
+window.addEventListener("resize",()=>{
+map.invalidateSize();
+});
+
+
+/* ================= STATE ================= */
+
+let allEvents=[];
+let latestEvent=null;
+let firstLoad=true;
+let alertsEnabled=true;
+let audioContext=null;
+let alarmTimer=null;
+let alarmRunning=false;
+let markers=[];
+let alertedPhysicalEvents=[];
+
+
+/* ================= SECURITY ================= */
+
+function escapeHTML(value){
+
+return String(value ?? "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+/* ================= SOURCE ================= */
+
+function sourceKey(source){
+
+const s=String(source || "").toUpperCase();
+
+if(s.includes("GFZ") || s.includes("GEOFON"))
+return "GFZ";
+
+if(s.includes("EMSC"))
+return "EMSC";
+
+if(s.includes("USGS"))
+return "USGS";
+
+return source;
+
+}
+
+
+/* ================= TIME ================= */
+
+function formatUTC(date){
+
+if(!date) return "--";
+
+const d=new Date(date);
+
+if(isNaN(d.getTime())) return "--";
+
+return d.toISOString()
+.replace("T"," ")
+.replace(".000Z"," UTC");
+
+}
+
+function formatLocal(date){
+
+if(!date) return "--";
+
+const d=new Date(date);
+
+if(isNaN(d.getTime())) return "--";
+
+return d.toLocaleString(
+"en-IN",
+{
+timeZone:"Asia/Kolkata",
+year:"numeric",
+month:"2-digit",
+day:"2-digit",
+hour:"2-digit",
+minute:"2-digit",
+second:"2-digit",
+hour12:false
+}
+)+" IST";
+
+}
+
+function timeAgo(date){
+
+const d=new Date(date);
+
+if(isNaN(d.getTime())) return "--";
+
+let seconds=Math.floor(
+(Date.now()-d.getTime())/1000
+);
+
+if(seconds<0) seconds=0;
+
+if(seconds<60) return "JUST NOW";
+
+const minutes=Math.floor(seconds/60);
+
+if(minutes<60)
+return minutes===1
+?"1 min ago"
+:minutes+" min ago";
+
+const hours=Math.floor(minutes/60);
+
+if(hours<24)
+return hours===1
+?"1 hr ago"
+:hours+" hrs ago";
+
+const days=Math.floor(hours/24);
+
+return days===1
+?"1 day ago"
+:days+" days ago";
+
+}
+
+
+/* ================= SOURCE AGO ================= */
+
+function updateSourceAgo(){
+
+const sourceMap={
+GFZ:"gfzAgo",
+USGS:"usgsAgo",
+EMSC:"emscAgo"
+};
+
+Object.keys(sourceMap).forEach(key=>{
+
+const event=
+allEvents
+.filter(e=>sourceKey(e.source)===key)
+.sort(
+(a,b)=>new Date(b.time)-new Date(a.time)
+)[0];
+
+const element=
+document.getElementById(sourceMap[key]);
+
+if(!element) return;
+
+element.textContent=
+event
+?"Latest event: "+timeAgo(event.time)
+:"Latest event: --";
+
+});
+
+}
+
+setInterval(updateSourceAgo,1000);
+
+
+/* ================= CLOCK ================= */
+
+function updateClocks(){
+
+const now=new Date();
+
+document.getElementById("localClock").textContent=
+now.toLocaleTimeString(
+"en-IN",
+{
+timeZone:"Asia/Kolkata",
+hour12:false
+}
+);
+
+document.getElementById("utcClock").textContent=
+now.toISOString().substring(11,19)+" UTC";
+
+}
+
+setInterval(updateClocks,1000);
+updateClocks();
+
+
+/* ================= FETCH ================= */
+
+async function fetchTimeout(url,timeout=10000){
+
+const controller=new AbortController();
+
+const timer=setTimeout(
+()=>controller.abort(),
+timeout
+);
+
+try{
+
+const response=
+await fetch(
+url,
+{
+method:"GET",
+cache:"no-store",
+signal:controller.signal
+}
+);
+
+if(!response.ok)
+throw new Error("HTTP "+response.status);
+
+return response;
+
+}finally{
+
+clearTimeout(timer);
+
+}
+
+}
+
+
+/* ================= USGS ================= */
+
+async function getUSGS(){
+
+const response=
+await fetchTimeout(
+USGS_URL+"?cache="+Date.now()
+);
+
+const json=await response.json();
+
+if(!json.features)
+throw new Error("Invalid USGS data");
+
+const events=[];
+
+json.features.forEach(feature=>{
+
+const p=feature.properties || {};
+const g=feature.geometry || {};
+const coords=g.coordinates || [];
+
+const mag=Number(p.mag);
+const lon=Number(coords[0]);
+const lat=Number(coords[1]);
+const depth=Number(coords[2]);
+
+const time=p.time
+?new Date(p.time).toISOString()
+:null;
+
+const eventTime = new Date(time).getTime();
+
+if(
+!Number.isFinite(mag) ||
+mag<MIN_MAGNITUDE ||
+!Number.isFinite(lat) ||
+!Number.isFinite(lon) ||
+!time ||
+(Date.now() - eventTime > MAX_AGE_MS)
+)
+return;
+
+events.push({
+
+id:makeEventID(
+time,
+lat,
+lon
+),
+
+source:"USGS",
+
+sourceID:feature.id || "",
+
+mag,
+place:p.place || "USGS Event",
+lat,
+lon,
+
+depth:Number.isFinite(depth)
+?depth:null,
+
+time,
+detected:new Date().toISOString()
+
+});
+
+});
+
+return events;
+
+}
+
+
+/* ================= GFZ ================= */
+
+function normalizeGFZHeader(header){
+
+return String(header || "")
+.replace(/^#+/,"")
+.trim()
+.toLowerCase()
+.replace(/[^\w]+/g,"");
+
+}
+
+function findHeaderIndex(headers,possible){
+
+for(const p of possible){
+
+const index=headers.findIndex(h=>h===p);
+
+if(index>=0) return index;
+
+}
+
+return -1;
+
+}
+
+async function getGFZ(){
+
+const end=new Date();
+
+const start=new Date(
+Date.now()-24*60*60*1000
+);
+
+const params=new URLSearchParams({
+
+format:"text",
+
+start:start.toISOString(),
+
+end:end.toISOString(),
+
+minmag:String(MIN_MAGNITUDE),
+
+limit:"200",
+
+orderby:"time",
+
+nodata:"404"
+
+});
+
+const response=
+await fetchTimeout(
+GFZ_URL+"?"+params.toString()
+);
+
+const raw=await response.text();
+
+if(!raw.trim()) return [];
+
+const rawLines=
+raw.split(/\r?\n/)
+.map(s=>s.trim())
+.filter(Boolean);
+
+const headerLine=
+rawLines.find(
+line=>
+line.startsWith("#") &&
+line.includes("|")
+);
+
+let headers=[];
+
+if(headerLine){
+
+headers=
+headerLine
+.replace(/^#+\s*/,"")
+.split("|")
+.map(normalizeGFZHeader);
+
+}
+
+const dataLines=
+rawLines.filter(
+line=>!line.startsWith("#")
+);
+
+const iID=findHeaderIndex(
+headers,
+["eventid","eventidentifier","publicid"]
+);
+
+const iTime=findHeaderIndex(
+headers,
+["time","origintime","datetime"]
+);
+
+const iLat=findHeaderIndex(
+headers,
+["latitude","lat"]
+);
+
+const iLon=findHeaderIndex(
+headers,
+["longitude","lon","long"]
+);
+
+const iDepth=findHeaderIndex(
+headers,
+["depthkm","depth"]
+);
+
+const iMag=findHeaderIndex(
+headers,
+["magnitude","mag"]
+);
+
+const iPlace=findHeaderIndex(
+headers,
+["eventlocationname","location","region","place"]
+);
+
+const events=[];
+
+for(const line of dataLines){
+
+const row=line.split("|").map(x=>x.trim());
+
+if(row.length<5) continue;
+
+let id="";
+let time="";
+let lat=NaN;
+let lon=NaN;
+let depth=NaN;
+let mag=NaN;
+let place="";
+
+if(
+iTime>=0 &&
+iLat>=0 &&
+iLon>=0 &&
+iMag>=0
+){
+
+id=iID>=0?row[iID]:"";
+time=row[iTime];
+lat=Number(row[iLat]);
+lon=Number(row[iLon]);
+depth=iDepth>=0?Number(row[iDepth]):NaN;
+mag=Number(row[iMag]);
+place=iPlace>=0?row[iPlace]:"";
+
+}else{
+
+if(!isNaN(Date.parse(row[0]))){
+
+time=row[0];
+lat=Number(row[1]);
+lon=Number(row[2]);
+depth=Number(row[3]);
+mag=Number(row[4]);
+place=row.slice(5).join(" ");
+
+}else if(
+row.length>=6 &&
+!isNaN(Date.parse(row[1]))
+){
+
+id=row[0];
+time=row[1];
+lat=Number(row[2]);
+lon=Number(row[3]);
+depth=Number(row[4]);
+mag=Number(row[5]);
+place=row.slice(6).join(" ");
+
+}
+
+}
+
+if(!time) continue;
+
+const normalizedTime=
+String(time)
+.trim()
+.replace(" ","T");
+
+let date;
+
+if(
+/Z$/i.test(normalizedTime) ||
+/[+-]\d\d:\d\d$/.test(normalizedTime)
+){
+
+date=new Date(normalizedTime);
+
+}else{
+
+date=new Date(normalizedTime+"Z");
+
+}
+
+if(isNaN(date.getTime())) continue;
+
+if(
+!Number.isFinite(lat) ||
+!Number.isFinite(lon) ||
+!Number.isFinite(mag) ||
+mag<MIN_MAGNITUDE ||
+(Date.now() - date.getTime() > MAX_AGE_MS)
+)
+continue;
+
+if(!place)
+place="GFZ / GEOFON Event";
+
+events.push({
+
+id:makeEventID(
+date.toISOString(),
+lat,
+lon
+),
+
+source:"GFZ / GEOFON",
+
+sourceID:id,
+
+mag,
+place,
+lat,
+lon,
+
+depth:Number.isFinite(depth)
+?depth:null,
+
+time:date.toISOString(),
+
+detected:new Date().toISOString()
+
+});
+
+}
+
+return events;
+
+}
+
+
+/* ================= EMSC ================= */
+
+async function getEMSC(){
+
+const end=new Date();
+
+const start=new Date(
+Date.now()-24*60*60*1000
+);
+
+const params=new URLSearchParams({
+
+format:"json",
+
+start:start.toISOString(),
+
+end:end.toISOString(),
+
+minmag:String(MIN_MAGNITUDE),
+
+limit:"200",
+
+orderby:"time",
+
+nodata:"404"
+
+});
+
+const response=
+await fetchTimeout(
+EMSC_URL+"?"+params.toString()
+);
+
+const json=await response.json();
+
+let rows=[];
+
+if(Array.isArray(json))
+rows=json;
+else if(Array.isArray(json.features))
+rows=json.features;
+else if(Array.isArray(json.events))
+rows=json.events;
+else if(Array.isArray(json.data))
+rows=json.data;
+
+const events=[];
+
+rows.forEach(item=>{
+
+const p=item.properties || item;
+const geometry=item.geometry || {};
+const coords=geometry.coordinates || [];
+
+const mag=Number(
+p.mag ??
+p.magnitude ??
+p.mag_value
+);
+
+const time=
+p.time ??
+p.datetime ??
+p.origin_time ??
+p.originTime;
+
+const lat=Number(
+p.lat ??
+p.latitude ??
+p.latitude_deg ??
+coords[1]
+);
+
+const lon=Number(
+p.lon ??
+p.longitude ??
+p.longitude_deg ??
+coords[0]
+);
+
+const depth=Number(
+p.depth ??
+p.depth_km ??
+p.depthkm ??
+coords[2]
+);
+
+const place=
+p.flynn_region ??
+p.place ??
+p.region ??
+p.location ??
+p.description ??
+"EMSC Event";
+
+const id=
+p.eventid ??
+p.event_id ??
+p.eventId ??
+item.id ??
+"";
+
+const date=new Date(time);
+
+if(isNaN(date.getTime()))
+return;
+
+if(
+!Number.isFinite(mag) ||
+mag<MIN_MAGNITUDE ||
+(Date.now() - date.getTime() > MAX_AGE_MS)
+)
+return;
+
+if(
+!Number.isFinite(lat) ||
+!Number.isFinite(lon)
+)
+return;
+
+events.push({
+
+id:makeEventID(
+date.toISOString(),
+lat,
+lon
+),
+
+source:"EMSC",
+
+sourceID:String(id),
+
+mag,
+place:String(place),
+lat,
+lon,
+
+depth:Number.isFinite(depth)
+?depth:null,
+
+time:date.toISOString(),
+
+detected:new Date().toISOString()
+
+});
+
+});
+
+return events;
+
+}
+
+
+/* ================= EVENT ID (UNIFIED DEDUPLICATION) ================= */
+
+function makeEventID(
+time,
+lat,
+lon
+){
+
+const roundedLat = Number(lat).toFixed(1);
+const roundedLon = Number(lon).toFixed(1);
+const timeBucket = time ? Math.floor(new Date(time).getTime() / 120000) : 0;
+
+return "EQ_"+timeBucket+"_"+roundedLat+"_"+roundedLon;
+
+}
+
+
+/* ================= SOURCE STATUS ================= */
+
+function updateSourceStatus(
+source,
+status,
+count,
+latest,
+error=""
+){
+
+const prefix=source.toLowerCase();
+
+const dot=document.getElementById(prefix+"Dot");
+const state=document.getElementById(prefix+"Status");
+const info=document.getElementById(prefix+"Info");
+
+if(!dot || !state || !info) return;
+
+dot.className="dot";
+
+if(status==="ok"){
+
+state.textContent="ONLINE";
+info.textContent=count+" events received";
+
+}else if(status==="loading"){
+
+state.textContent="CONNECTING";
+dot.classList.add("loading");
+info.textContent="Connecting...";
+
+}else{
+
+state.textContent="ERROR";
+dot.classList.add("error");
+info.textContent=error || "Source unavailable";
+
+}
+
+}
+
+
+/* ================= LOAD ================= */
+
+async function loadEvents(){
+
+document.getElementById("connectionStatus").textContent=
+"● UPDATING GFZ / USGS / EMSC...";
+
+const results=
+await Promise.allSettled([
+getGFZ(),
+getUSGS(),
+getEMSC()
+]);
+
+let gfz=[];
+let usgs=[];
+let emsc=[];
+
+if(results[0].status==="fulfilled"){
+
+gfz=results[0].value;
+
+gfz.sort(
+(a,b)=>new Date(b.time)-new Date(a.time)
+);
+
+updateSourceStatus(
+"GFZ","ok",gfz.length,gfz[0]
+);
+
+}else{
+
+updateSourceStatus(
+"GFZ",
+"error",
+0,
+null,
+"GFZ request failed"
+);
+
+}
+
+if(results[1].status==="fulfilled"){
+
+usgs=results[1].value;
+
+usgs.sort(
+(a,b)=>new Date(b.time)-new Date(a.time)
+);
+
+updateSourceStatus(
+"USGS","ok",usgs.length,usgs[0]
+);
+
+}else{
+
+updateSourceStatus(
+"USGS",
+"error",
+0,
+null,
+"USGS request failed"
+);
+
+}
+
+if(results[2].status==="fulfilled"){
+
+emsc=results[2].value;
+
+emsc.sort(
+(a,b)=>new Date(b.time)-new Date(a.time)
+);
+
+updateSourceStatus(
+"EMSC","ok",emsc.length,emsc[0]
+);
+
+}else{
+
+updateSourceStatus(
+"EMSC",
+"error",
+0,
+null,
+"EMSC request failed"
+);
+
+}
+
+const combined=[
+...gfz,
+...usgs,
+...emsc
+];
+
+const unique=new Map();
+
+combined.forEach(e=>{
+
+if(!unique.has(e.id) || unique.get(e.id).mag < e.mag){
+
+unique.set(e.id,e);
+
+}
+
+});
+
+allEvents=
+Array.from(unique.values())
+.filter(e=>
+Number.isFinite(e.lat) &&
+Number.isFinite(e.lon) &&
+Number.isFinite(e.mag) &&
+(Date.now() - new Date(e.time).getTime() <= MAX_AGE_MS)
+)
+.sort(
+(a,b)=>new Date(b.time)-new Date(a.time)
+)
+.slice(0,100);
+
+latestEvent=
+allEvents.length
+?allEvents[0]
+:null;
+
+renderMap();
+renderEvents();
+renderLatest();
+renderStats();
+detectNewEvents();
+updateSourceAgo();
+
+document.getElementById("connectionStatus").textContent=
+"● LIVE • GFZ "+
+gfz.length+
+" • USGS "+
+usgs.length+
+" • EMSC "+
+emsc.length;
+
+}
+
+
+/* ================= MAP ================= */
+
+function renderMap(){
+
+markers.forEach(
+marker=>map.removeLayer(marker)
+);
+
+markers=[];
+
+if(!latestEvent) return;
+
+const e=latestEvent;
+
+const icon=L.divIcon({
+
+className:"",
+
+html:
+`<div class="new-red-point">★</div>`,
+
+iconSize:[44,44],
+
+iconAnchor:[22,22]
+
+});
+
+const marker=
+L.marker(
+[e.lat,e.lon],
+{icon}
+).addTo(map);
+
+marker.bindPopup(
+`<b>★ LATEST EVENT</b><br>`+
+`<b>Mag:</b> M${e.mag.toFixed(1)}<br>`+
+`<b>Place:</b> ${escapeHTML(e.place)}<br>`+
+`<b>Source:</b> ${escapeHTML(e.source)}<br>`+
+`<b>Time:</b> ${formatUTC(e.time)}`
+);
+
+markers.push(marker);
+
+allEvents.forEach(item=>{
+
+if(item.id===e.id) return;
+
+let className="lg1";
+
+if(item.mag>=6.0)
+className="lg3";
+else if(item.mag>=5.0)
+className="lg2";
+
+const color=
+item.mag>=6.0
+?"#ff3333"
+:item.mag>=5.0
+?"#ffaa00"
+:"#00b359";
+
+const circle=
+L.circleMarker(
+[item.lat,item.lon],
+{
+radius:Math.max(
+4,
+(item.mag-4.0)*3
+),
+fillColor:color,
+color:"#ffffff",
+weight:1,
+opacity:1,
+fillOpacity:0.85
+}
+).addTo(map);
+
+circle.bindPopup(
+`<b>Mag:</b> M${item.mag.toFixed(1)}<br>`+
+`<b>Place:</b> ${escapeHTML(item.place)}<br>`+
+`<b>Source:</b> ${escapeHTML(item.source)}<br>`+
+`<b>Time:</b> ${formatUTC(item.time)}`
+);
+
+markers.push(circle);
+
+});
+
+}
+
+
+/* ================= EVENTS ================= */
+
+function renderEvents(){
+
+const container=
+document.getElementById("eventList");
+
+if(!allEvents.length){
+
+container.innerHTML=
+`<div style="
+padding:15px;
+text-align:center;
+color:#52798f;
+font-weight:bold;">
+No events found (M${MIN_MAGNITUDE}+)
+</div>`;
+
+return;
+
+}
+
+let html="";
+
+allEvents.forEach((e,index)=>{
+
+html+=
+`<div class="event" onclick="focusEvent(${index})">
+<div class="eventHead">
+<div class="mag">M${e.mag.toFixed(1)}</div>
+<div class="sourceTag">${escapeHTML(e.source)}</div>
+</div>
+<div class="eventPlace">${escapeHTML(e.place)}</div>
+<div class="eventTime">UTC: ${formatUTC(e.time)}</div>
+<div class="eventMeta">
+Depth: ${
+e.depth!==null
+?e.depth.toFixed(1)+" km"
+:"--"
+} | Lat: ${e.lat.toFixed(2)} | Lon: ${e.lon.toFixed(2)}
+</div>
+</div>`;
+
+});
+
+container.innerHTML=html;
+
+}
+
+function focusEvent(index){
+
+const e=allEvents[index];
+
+if(!e) return;
+
+map.setView([e.lat,e.lon],6);
+
+markers.forEach(m=>{
+
+if(
+m.getLatLng &&
+m.getLatLng().lat===e.lat &&
+m.getLatLng().lng===e.lon
+){
+
+m.openPopup();
+
+}
+
+});
+
+}
+
+
+/* ================= LATEST ================= */
+
+function renderLatest(){
+
+if(!latestEvent){
+
+document.getElementById("latestMag").textContent="--";
+document.getElementById("latestPlace").textContent="No earthquake events found.";
+document.getElementById("latestSource").textContent="--";
+document.getElementById("latestDepth").textContent="--";
+document.getElementById("latestUTC").textContent="--";
+document.getElementById("latestDetected").textContent="--";
+document.getElementById("latestLat").textContent="--";
+document.getElementById("latestLon").textContent="--";
+document.getElementById("latestID").textContent="--";
+document.getElementById("latestUpdated").textContent="--";
+
+return;
+
+}
+
+const e=latestEvent;
+
+document.getElementById("latestMag").textContent=
+"M"+e.mag.toFixed(1);
+
+document.getElementById("latestPlace").textContent=
+e.place;
+
+document.getElementById("latestSource").textContent=
+e.source;
+
+document.getElementById("latestDepth").textContent=
+e.depth!==null
+?e.depth.toFixed(1)+" km"
+:"--";
+
+document.getElementById("latestUTC").textContent=
+formatUTC(e.time);
+
+document.getElementById("latestDetected").textContent=
+formatLocal(e.detected);
+
+document.getElementById("latestLat").textContent=
+e.lat.toFixed(4);
+
+document.getElementById("latestLon").textContent=
+e.lon.toFixed(4);
+
+document.getElementById("latestID").textContent=
+e.sourceID || e.id;
+
+document.getElementById("latestUpdated").textContent=
+timeAgo(e.detected);
+
+}
+
+
+/* ================= STATS ================= */
+
+function renderStats(){
+
+document.getElementById("eventCount").textContent=
+allEvents.length;
+
+let strongest="--";
+
+if(allEvents.length){
+
+const max=
+Math.max(
+...allEvents.map(e=>e.mag)
+);
+
+strongest="M"+max.toFixed(1);
+
+}
+
+document.getElementById("strongest").textContent=
+strongest;
+
+document.getElementById("updateAge").textContent=
+new Date().toLocaleTimeString(
+"en-IN",
+{
+timeZone:"Asia/Kolkata",
+hour12:false
+}
+);
+
+}
+
+
+/* ================= ALERT, AUDIO & SPEECH VOICE ================= */
+
+function initAudio(){
+
+if(audioContext) return;
+
+try{
+
+audioContext=
+new (
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+}catch(e){
+console.error(e);
+}
+
+}
+
+function playBeepTone(){
+
+if(!audioContext) return;
+
+try{
+
+const osc=
+audioContext.createOscillator();
+
+const gain=
+audioContext.createGain();
+
+osc.type="sine";
+osc.frequency.setValueAtTime(
+880,
+audioContext.currentTime
+);
+
+gain.gain.setValueAtTime(
+0.2,
+audioContext.currentTime
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.01,
+audioContext.currentTime+0.5
+);
+
+osc.connect(gain);
+gain.connect(audioContext.destination);
+
+osc.start();
+osc.stop(audioContext.currentTime+0.5);
+
+}catch(e){
+console.error(e);
+}
+
+}
+
+function speakVoiceAlert(mag, place, source){
+
+if (!('speechSynthesis' in window)) return;
+
+window.speechSynthesis.cancel(); // Stop any previous ongoing speech
+
+const text = `Attention! Tsunami Early Warning System alert. Magnitude ${mag.toFixed(1)} earthquake detected near ${place}, reported by ${source}.`;
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.rate = 1.0;
+utterance.pitch = 1.0;
+utterance.volume = 1.0;
+
+window.speechSynthesis.speak(utterance);
+
+}
+
+function testAlert(){
+
+initAudio();
+
+if(
+audioContext &&
+audioContext.state==="suspended"
+){
+
+audioContext.resume();
+
+}
+
+playBeepTone();
+
+const sampleEvent = latestEvent || {
+mag: 6.1,
+place: "Solomon Islands",
+source: "USGS",
+depth: 10.0,
+lat: -6.99,
+lon: 155.74,
+time: "2026-10-11T14:07:19Z"
+};
+
+showAlertBox(sampleEvent);
+speakVoiceAlert(sampleEvent.mag, sampleEvent.place, sampleEvent.source);
+
+}
+
+function showAlertBox(e){
+
+const overlay=
+document.getElementById("alertOverlay");
+
+document.getElementById("alertMagnitude").textContent=
+"M"+Number(e.mag).toFixed(1);
+
+document.getElementById("alertText").textContent=
+"Earthquake event detected near " + escapeHTML(e.place) + ".";
+
+const detailsHtml = `
+<div class="alertDetailItem"><b>Source:</b> ${escapeHTML(e.source)}</div>
+<div class="alertDetailItem"><b>Depth:</b> ${e.depth !== null ? e.depth.toFixed(1) + " km" : "--"}</div>
+<div class="alertDetailItem"><b>UTC Time:</b> ${formatUTC(e.time)}</div>
+<div class="alertDetailItem"><b>Coordinates:</b> ${e.lat.toFixed(2)}, ${e.lon.toFixed(2)}</div>
+`;
+document.getElementById("alertDetailsGrid").innerHTML = detailsHtml;
+
+overlay.style.display="flex";
+
+if(alarmTimer) clearInterval(alarmTimer);
+
+alarmTimer=setInterval(
+playBeepTone,
+1000
+);
+
+setTimeout(()=>{
+
+overlay.style.display="none";
+
+if(alarmTimer){
+clearInterval(alarmTimer);
+alarmTimer=null;
+}
+
+},9000);
+
+}
+
+function detectNewEvents(){
+
+if(!latestEvent) return;
+
+if(firstLoad){
+
+alertedPhysicalEvents.push(latestEvent.id);
+firstLoad=false;
+return;
+
+}
+
+if(
+!alertedPhysicalEvents.includes(latestEvent.id)
+){
+
+alertedPhysicalEvents.push(latestEvent.id);
+
+initAudio();
+
+if(
+audioContext &&
+audioContext.state==="suspended"
+){
+
+audioContext.resume();
+
+}
+
+showAlertBox(latestEvent);
+speakVoiceAlert(latestEvent.mag, latestEvent.place, latestEvent.source);
+
+}
+
+}
+
+
+/* ================= WHATSAPP ================= */
+
+function sendLatestWhatsApp(){
+
+if(!latestEvent){
+
+alert("No earthquake data available to share.");
+
+return;
+
+}
+
+const e=latestEvent;
+
+const d = new Date(e.time);
+const dateStr = !isNaN(d.getTime()) ? d.toISOString().substring(0,10) : "--";
+const timeStr = !isNaN(d.getTime()) ? d.toISOString().substring(11,19) + " UTC" : formatUTC(e.time);
+
+const latDir = e.lat >= 0 ? "N" : "S";
+const lonDir = e.lon >= 0 ? "E" : "W";
+const latStr = Math.abs(e.lat).toFixed(2) + " " + latDir;
+const lonStr = Math.abs(e.lon).toFixed(2) + " " + lonDir;
+
+const msg=
+`Dear Sir/Madam,\n\n`+
+`TEWS detected an earthquake of Magnitude : ${e.mag.toFixed(1)} M\n`+
+`Region: ${e.place}\n`+
+`Date & Time: ${dateStr}\n`+
+`${timeStr}\n`+
+`Location: ${latStr}, ${lonStr}\n`+
+`Depth: ${e.depth!==null?e.depth.toFixed(1)+" km":"--"}\n`+
+`There is no Tsunami threat for India`;
+
+const url=
+`https://api.whatsapp.com/send?text=`+
+encodeURIComponent(msg);
+
+window.open(url,"_blank");
+
+}
+
+
+/* ================= FULLSCREEN ================= */
+
+function toggleFullscreen(){
+
+if(!document.fullscreenElement){
+
+document.documentElement.requestFullscreen()
+.catch(err=>console.error(err));
+
+}else{
+
+if(document.exitFullscreen){
+
+document.exitFullscreen();
+
+}
+
+}
+
+}
+
+
+/* ================= MODAL ================= */
+
+function showSourceDetails(sourceName){
+
+const modal=
+document.getElementById("sourceModal");
+
+document.getElementById("modalTitle").textContent=
+sourceName+" SOURCE DATA FEED";
+
+const filtered=
+allEvents.filter(
+e=>sourceKey(e.source)===sourceName
+);
+
+let html=
+`<p style="margin-bottom:10px;font-size:11px;color:#52798f;font-weight:bold;">`+
+`Total events registered from ${sourceName}: ${filtered.length}`+
+`</p>`;
+
+if(!filtered.length){
+
+html+=
+`<p style="font-size:10px;color:#52798f;">No active events recorded currently from this source.</p>`;
+
+}else{
+
+html+=
+`<div style="max-height:60vh;overflow:auto;">`;
+
+filtered.forEach(e=>{
+
+html+=
+`<div style="margin-bottom:8px;padding:8px;border:1px solid #bce0fd;border-radius:5px;background:#f4f9ff;">`+
+`<b>M${e.mag.toFixed(1)}</b> - ${escapeHTML(e.place)}<br>`+
+`<small style="color:#52798f;">Time: ${formatUTC(e.time)} | Depth: ${e.depth!==null?e.depth.toFixed(1)+" km":"--"}</small>`+
+`</div>`;
+
+});
+
+html+=`</div>`;
+
+}
+
+document.getElementById("modalContent").innerHTML=html;
+modal.style.display="flex";
+
+}
+
+function closeSourceModal(){
+
+document.getElementById("sourceModal").style.display="none";
+
+}
+
+window.addEventListener("click",e=>{
+
+const modal=
+document.getElementById("sourceModal");
+
+if(e.target===modal){
+modal.style.display="none";
+}
+
+});
+
+
+/* ================= INIT ================= */
+
+loadEvents();
+setInterval(loadEvents,REFRESH_MS);
+
+</script>
+</body>
+</html>
